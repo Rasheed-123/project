@@ -1,0 +1,235 @@
+SELECT b.[Id],
+       b.cirbranchlocationcode,
+       blregionaldirector.effectiveasof,
+       blregionaldirector.repcode AS blregionaldirectorcode,
+       blmanager.repcode AS blmanager,
+       blmanager.effectiveasof AS blmanagereffectiveasof,
+       blbusinessunit.bucode AS blbusinessunitcode,
+       blbusinessunit.effectivestart AS blbusinessuniteffectivestart,
+       blbusinessunit.effectiveend AS blbusinessuniteffectiveend,
+       blnamecode.NAME AS branchlocationname,
+       blnamecode.organizationid,
+       blstatus.NAME AS branchlocationstatus,
+       cast(CONVERT(varchar,blstatus.EffectiveAsOf, 127) AS varchar(30)) AS branchlocationstatuseffectivedt,
+       blprimaryosjsupervisor.repcode AS blprimaryosjsupervisorcode,
+       blprimaryosjsupervisor.effectiveasof AS blprimaryosjeffectiveasof ,  fr.CrdNumber,
+       frs.Name AS 'FINRA Registration Status',
+       cast(CONVERT(varchar,frshi.EffectiveAsOf, 127) AS varchar(30)) AS 'FINRA Registration Status Effective Date',
+       frt.Name AS 'FINRA Registration Type',
+       frthi.EffectiveAsOf AS 'FINRA Registration Type Effective Date' ,
+        (SELECT STUFF(
+                  (SELECT '| ' + (isnull(au.UsageType,' ') + ';' + isnull(ga.Street1,' ') + ';' + isnull(ga.Street2,' ') + ';' + isnull(ga.City,' ') + ';' + isnull(left(ga.zip,5),' ') + isnull(iif(len(ga.zip)<6,' ','-' + substring(ga.zip,6,len(ga.zip)-5)),' ')    + ';' + isnull(gs.Name,' ') + ';' + isnull(gs.Abbreviation,' ') + ';' + isnull(c.Abbreviation,' ') + ';' + isnull(cast(convert(varchar,ap.EffectiveStart,127) AS varchar(30)),' ') + ';' + isnull(cast(convert(varchar,ap.EffectiveEnd,127) AS varchar(30)), ' '))
+                   FROM [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.BranchLocation bl
+                   INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.COMMON.PartyRole pr ON pr.Id = bl.Id
+                   INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.COMMON.AddressProperties ap ON ap.PartyId = pr.PartyId
+                   INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.COMMON.Address a ON a.Id = ap.AddressId
+                   INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.COMMON.AddressUse au ON au.Id = ap.AddressUseId
+                   INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.COMMON.GeographicAddress ga ON ga.Id = ap.AddressId
+                   INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.COMMON.GeographicState gs ON gs.Id = ga.GeographicStateId
+                   INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.COMMON.Country c ON c.Id = gs.CountryId
+                   WHERE au.AddressType = 'Cambridge.Enterprise.Common.Domain.GeographicAddress'
+                     AND au.UsageType IN ('Physical')
+                     AND b.CirBranchLocationCode = bl.CirBranchLocationCode
+                     FOR XML PATH(''), TYPE).value('.', 'varchar(max)'), 1,1,'')) PhysicalAddress ,
+        (SELECT STUFF(
+                  (SELECT '| ' + (isnull(au.UsageType,' ') + ';' + isnull(ga.Street1,' ') + ';' + isnull(ga.Street2,' ') + ';' + isnull(ga.City,' ') + ';' + isnull(left(ga.zip,5),' ') + isnull(iif(len(ga.zip)<6,' ','-' + substring(ga.zip,6,len(ga.zip)-5)),' ')    + ';' + isnull(gs.Name,' ') + ';' + isnull(gs.Abbreviation,' ') + ';' + isnull(c.Abbreviation,' ') + ';' + isnull(cast(convert(varchar,ap.EffectiveStart,127) AS varchar(30)),' ') + ';' + isnull(cast(convert(varchar,ap.EffectiveEnd,127) AS varchar(30)), ' '))
+				   FROM [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.BranchLocation bl
+                   INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.COMMON.PartyRole pr ON pr.Id = bl.Id
+                   INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.COMMON.AddressProperties ap ON ap.PartyId = pr.PartyId
+                   INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.COMMON.Address a ON a.Id = ap.AddressId
+                   INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.COMMON.AddressUse au ON au.Id = ap.AddressUseId
+                   INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.COMMON.GeographicAddress ga ON ga.Id = ap.AddressId
+                   INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.COMMON.GeographicState gs ON gs.Id = ga.GeographicStateId
+                   INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.COMMON.Country c ON c.Id = gs.CountryId
+                   WHERE au.AddressType = 'Cambridge.Enterprise.Common.Domain.GeographicAddress'
+					 AND au.UsageType IN ('Mailing')
+                     AND b.CirBranchLocationCode = bl.CirBranchLocationCode
+                     FOR XML PATH(''), TYPE).value('.', 'varchar(max)'), 1,1,'')) MailingAddress ,
+        (SELECT STUFF(
+                  (SELECT '| '+ (isnull(au.UsageType,' ') + ';' + isnull(ta.number,' ') + ';' + isnull(ta.extension,' '))
+                   FROM [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.BranchLocation bl
+                   INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.COMMON.PartyRole pr ON pr.Id = bl.Id
+                   INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.COMMON.AddressProperties ap ON ap.PartyId = pr.PartyId
+                   INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.COMMON.Address a ON a.Id = ap.AddressId
+                   INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.COMMON.AddressUse au ON au.Id = ap.AddressUseId
+                   INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.COMMON.TelecomAddress ta ON ta.Id = ap.AddressId
+                   WHERE au.AddressType = 'Cambridge.Enterprise.Common.Domain.TelecomAddress'
+                     AND au.UsageType = 'Office'
+                     AND b.CirBranchLocationCode = bl.CirBranchLocationCode
+                     FOR XML PATH(''), TYPE).value('.', 'varchar(max)'), 1,1,'')) OfficePhone ,
+        (SELECT STUFF(
+                  (SELECT '| '+ (isnull(au.UsageType,' ') + ';' + isnull(ta.number,' ') + ';' + isnull(ta.extension,' '))
+                   FROM [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.BranchLocation bl
+                   INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.COMMON.PartyRole pr ON pr.Id = bl.Id
+                   INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.COMMON.AddressProperties ap ON ap.PartyId = pr.PartyId
+                   INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.COMMON.Address a ON a.Id = ap.AddressId
+                   INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.COMMON.AddressUse au ON au.Id = ap.AddressUseId
+                   INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.COMMON.TelecomAddress ta ON ta.Id = ap.AddressId
+                   WHERE au.AddressType = 'Cambridge.Enterprise.Common.Domain.TelecomAddress'
+                     AND b.CirBranchLocationCode = bl.CirBranchLocationCode
+                     AND au.UsageType = 'Fax'
+                     FOR XML PATH(''), TYPE).value('.', 'varchar(max)'), 1,1,'')) Fax ,
+        (SELECT STUFF(
+                  (SELECT '| '+ (isnull(wa.Url,' ') + ';' + isnull(cast(convert(varchar,ap.EffectiveStart,127) AS varchar(30)),' ') + ';'+ isnull(cast(ap.IsPrimary AS varchar(1)),' ') + ';'+ isnull(cast(convert(varchar,ap.EffectiveEnd,127) AS varchar(30)), ' ') + ';'+ isnull(cast(convert(varchar,ap.ModifiedDate,127) AS varchar(30)),' '))
+                   FROM [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.BranchLocation bl
+                   INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.COMMON.PartyRole pr ON pr.Id = bl.Id
+                   INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.COMMON.AddressProperties ap ON ap.PartyId = pr.PartyId
+                   INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.COMMON.Address a ON a.Id = ap.AddressId
+                   INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.COMMON.AddressUse au ON au.Id = ap.AddressUseId
+                   INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.COMMON.WebAddress wa ON wa.Id = ap.AddressId
+                   WHERE au.AddressType = 'Cambridge.Enterprise.Common.Domain.WebAddress'
+                     AND b.CirBranchLocationCode = bl.CirBranchLocationCode
+                     FOR XML PATH(''), TYPE).value('.', 'varchar(max)'), 1,1,'')) Website ,
+        (SELECT STUFF(
+                  (SELECT '| '+ (isnull(c.code,' ') + ';' + isnull(cast(convert(varchar,blcr.EffectiveAsOf,127) AS varchar(30)), ' '))
+                   FROM [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.BranchLocation bl
+                   INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.BranchLocationContainsRepresentatives blcr ON blcr.BranchLocationId = bl.Id
+                   INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.Representative r ON r.Id = blcr.RepresentativeId
+                   INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.CompensationCodeAssignment cca ON cca.CompensatableEntityId = r.CompensatableEntityId
+                   INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.CompensationCode c ON c.Id = cca.CompensationCodeId
+                   WHERE b.CirBranchLocationCode = bl.CirBranchLocationCode
+                     FOR XML PATH(''), TYPE).value('.', 'varchar(max)'), 1,1,'')) BLFP ,
+        (SELECT STUFF(
+                  (SELECT '| ' + (bl.CirBranchLocationCode + ';' + isnull(oan.name,' '))
+                   FROM [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.BranchLocation bl
+                   INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.COMMON.PartyRole pr ON pr.Id = bl.Id
+                   INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.COMMON.Organization o ON o.Id = pr.PartyId
+                   INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.COMMON.OrganizationAlternateName oan ON oan.OrganizationId = o.Id
+                   INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.COMMON.OrganizationAlternateNameHistoryItem oanhi ON oanhi.OrganizationAlternateNameId = oan.Id
+                   WHERE b.CirBranchLocationCode = bl.CirBranchLocationCode
+                     FOR XML PATH(''), TYPE).value('.', 'varchar(max)'), 1,1,'')) BLDBA, 
+
+
+			    (SELECT STUFF(
+                  (SELECT '| '+ (isnull(blsh.branchcode,' ') + ';' + blsh.StatusName + 
+				  ';' + isnull(cast(convert(varchar,blsh.StatusDate,127) AS varchar(30)), ' '))
+				   FROM [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.BranchLocation bl
+				   join [CambridgeEnterprise].[dbo].[view_BranchLocationStatusHistory] blsh on blsh.branchlocationId = bl.id
+                   WHERE b.CirBranchLocationCode = bl.CirBranchLocationCode
+                     order by blsh.StatusDate desc
+					 FOR XML PATH(''), TYPE).value('.', 'varchar(max)'), 1,1,'')) BranchLocationStatusHistory ,
+		 
+					 
+				(SELECT STUFF(
+                  (SELECT '| '+ (isnull(blbuh.branchcode,' ') + ';' + isnull(cast(blbuh.BUcode as varchar(10)),' ') + ';' + 
+				  isnull(blbuh.BUName,' ') + ';' + isnull(cast(convert(varchar,blbuh.BUEffectiveStart,127) AS varchar(200)), ' ')
+				  + ';' + isnull(cast(convert(varchar,blbuh.BUEffectiveEnd,127) AS varchar(200)), ' ')
+				  )
+				   FROM [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.BranchLocation bl
+				   join [CambridgeEnterprise].[dbo].[view_BranchLocationBusinessUnitHistory] blbuh on blbuh.branchlocationId = bl.id
+                   WHERE b.CirBranchLocationCode = bl.CirBranchLocationCode
+                     order by blbuh.BUEffectiveStart desc
+					 FOR XML PATH(''), TYPE).value('.', 'varchar(max)'), 1,1,'')) BranchLocationBusinessUnitHistory ,
+
+				(SELECT STUFF(
+                  (SELECT '| '+ (isnull(blmh.branchcode,' ') + ';' + isnull(blmh.managerCode,' ') + ';' 
+				  + isnull(cast(convert(varchar,blmh.managerEffectiveStart,127) AS varchar(30)), ' ') + ';'
+				  + isnull(cast(convert(varchar,blmh.managerEffectiveEnd,127) AS varchar(30)), ' '))
+				   FROM [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.BranchLocation bl
+				   join [CambridgeEnterprise].[dbo].[view_BranchLocationManagerHistory] blmh on blmh.branchlocationId = bl.id
+                   WHERE b.CirBranchLocationCode = bl.CirBranchLocationCode
+                     order by blmh.managerEffectiveStart desc
+					 FOR XML PATH(''), TYPE).value('.', 'varchar(max)'), 1,1,'')) BranchLocationManagerHistory ,
+
+
+			(SELECT STUFF(
+                  (SELECT '| '+ (isnull(blnh.cirbranchlocationcode,' ') + ';' + blnh.Name + 
+				  ';' + isnull(cast(convert(varchar,blnh.EffectiveStart,127) AS varchar(30)), ' ')
+				  + ';' + isnull(cast(convert(varchar,blnh.EffectiveStart,127) AS varchar(30)), ' ')
+				  )
+				   FROM [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.BranchLocation bl
+				   join [CambridgeEnterprise].[dbo].[view_BranchLocationNameHistory] blnh on blnh.branchId = bl.id
+                   WHERE b.CirBranchLocationCode = bl.CirBranchLocationCode
+                     order by blnh.EffectiveStart desc
+					 FOR XML PATH(''), TYPE).value('.', 'varchar(max)'), 1,1,'')) BranchLocationNameHistory ,
+
+			(SELECT STUFF(
+                  (SELECT '| '+ (isnull(bloeh.BLcode,' ') + ';' + isnull(bloeh.OECompcode,' ')  + 
+				  + ';' + isnull(cast(convert(varchar,bloeh.EffectiveAsof,127) AS varchar(30)), ' ')
+				  )
+				   FROM [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.BranchLocation bl
+				   join [CambridgeEnterprise].[dbo].[view_BranchLocationOrganizationalEntityHistory] bloeh on bloeh.blId = bl.id
+                   WHERE b.CirBranchLocationCode = bl.CirBranchLocationCode
+                     order by bloeh.EffectiveAsOf desc
+					 FOR XML PATH(''), TYPE).value('.', 'varchar(max)'), 1,1,'')) BranchLocationOrganizationalEntityHistory ,
+
+
+		(SELECT STUFF(
+                  (SELECT '| '+ (isnull(blpbh.Branchcode,' ') + ';' + isnull(blpbh.ParentBranchCode,' ')  + 
+				  + ';' + isnull(cast(convert(varchar,blpbh.parentEffectiveStart,127) AS varchar(30)), ' ')
+				  + ';' + isnull(cast(convert(varchar,blpbh.parentEffectiveEnd,127) AS varchar(30)), ' ')
+				  )
+				   FROM [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.BranchLocation bl
+				   join [CambridgeEnterprise].[dbo].[view_BranchLocationParentBranchHistory] blpbh on blpbh.BranchLocationId = bl.id
+                   WHERE b.CirBranchLocationCode = bl.CirBranchLocationCode
+                     order by blpbh.parentEffectiveStart desc
+					 FOR XML PATH(''), TYPE).value('.', 'varchar(max)'), 1,1,'')) BranchLocationParentBranchHistory ,
+
+
+					 getdate() [LoadTimestamp]
+        
+		
+		
+		FROM [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.BranchLocation b
+        Inner JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.FinraRegistration fr ON fr.Id = b.FinraRegistrationId
+        Inner JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.FinraRegistrationStatusHistoryItem frshi ON frshi.Id = fr.FinraRegistrationStatusHistoryItemId
+        Inner JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.FinraRegistrationStatus frs ON frs.Id = frshi.HistoryItemValueId
+        Inner JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.FinraRegistrationTypeHistoryItem frthi ON frthi.Id = fr.FinraRegistrationTypeHistoryItemId
+        Inner JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.FinraRegistrationType frt ON frt.Id = frthi.HistoryItemValueId
+        LEFT OUTER JOIN
+          (SELECT bl.CirBranchLocationCode,
+                  opn.Name,
+                  opn.OrganizationId
+           FROM [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.BranchLocation bl
+           INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.COMMON.PartyRole pr ON pr.Id = bl.Id
+           INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.COMMON.Organization o ON o.Id = pr.PartyId
+           INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.COMMON.OrganizationPrimaryName opn ON opn.OrganizationId = o.Id) BLNameCode ON b.CirBranchLocationCode = BLNameCode.CirBranchLocationCode
+        LEFT OUTER JOIN
+          (SELECT bl.CirBranchLocationCode,
+                  bls.Name,
+                  blshi.EffectiveAsOf
+           FROM [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.BranchLocation bl
+           INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.BranchLocationStatusHistoryItem blshi ON blshi.Id = bl.BranchLocationStatusHistoryItemId
+           INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.BranchLocationStatus bls ON bls.Id = blshi.HistoryItemValueId) BLStatus ON b.CirBranchLocationCode = BLStatus.CirBranchLocationCode
+        LEFT OUTER JOIN
+          (SELECT bl.CirBranchLocationCode,
+                  rcbl.EffectiveAsOf AS EffectiveAsOf,
+                  c.Code AS RepCode
+           FROM [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.BranchLocation bl
+           INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.RegionContainsBranchLocation rcbl ON rcbl.BranchLocationId = bl.Id
+           INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.RegionManagment rm ON rm.RegionId = rcbl.RegionId
+           INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.RegionalDirector rd ON rd.Id = rm.RegionalDirectorId
+           INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.COMMON.PartyRole pr ON pr.Id = rd.Id
+           INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.COMMON.PartyRole pr2 ON pr2.PartyId = pr.PartyId
+           AND pr2.PartyRoleTypeId = '867A51F3-2C74-4A25-BE71-8EC685058B7A'
+           INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.Representative r ON r.Id = pr2.Id
+           INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.PrimaryCompensationCodeAssignment pcca ON pcca.CompensatableEntityId = r.CompensatableEntityId
+           INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.CompensationCode c ON c.Id = pcca.CompensationCodeId) BLRegionalDirector ON b.CirBranchLocationCode = BLRegionalDirector.CirBranchLocationCode
+        LEFT OUTER JOIN
+          (SELECT bl.CirBranchLocationCode,
+                  c.Code AS RepCode,
+                  blm.EffectiveAsOf
+           FROM [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.BranchLocation bl
+           INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.BranchLocationManagement blm ON blm.Id = bl.BranchLocationManagementId
+           INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.Representative r ON r.Id = blm.RepresentativeId
+           INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.PrimaryCompensationCodeAssignment pcca ON pcca.CompensatableEntityId = r.CompensatableEntityId
+           INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.CompensationCode c ON c.Id = pcca.CompensationCodeId) BLManager ON b.CirBranchLocationCode = BLManager.CirBranchLocationCode
+        LEFT OUTER JOIN
+          (SELECT bl.CirBranchLocationCode,
+                  bu.AutoCode AS BUCode,
+                  bucbl.EffectiveStart,
+                  bucbl.EffectiveEnd
+           FROM [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.BranchLocation bl
+           INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.BusinessUnitContainsBranchLocation bucbl ON bucbl.BranchLocationId = bl.Id
+           INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.BusinessUnit bu ON bu.Id = bucbl.BusinessUnitId) BLBusinessUnit ON b.CirBranchLocationCode = BLBusinessUnit.CirBranchLocationCode
+        LEFT OUTER JOIN
+          (SELECT bl.CirBranchLocationCode,
+                  c.Code AS RepCode,
+                  pobls.EffectiveAsOf
+           FROM [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.BranchLocation bl
+           INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.PrimaryOsjBranchLocationSupervisionAssignment pobls ON pobls.BranchLocationId = bl.Id
+           INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.Representative r ON r.RegisteredRepresentativeId = pobls.RegisteredRepresentativeId
+           INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.PrimaryCompensationCodeAssignment pcca ON pcca.CompensatableEntityId = r.CompensatableEntityId
+           INNER JOIN [UAT-SQL-INT3].CAMBRIDGEENTERPRISE.Core_Hierarchy.CompensationCode c ON c.Id = pcca.CompensationCodeId) BLPrimaryOSJSupervisor ON b.CirBranchLocationCode = BLPrimaryOSJSupervisor.CirBranchLocationCode
+
+		   order by cirbranchlocationcode 
